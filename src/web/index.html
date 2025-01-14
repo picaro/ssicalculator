@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Security Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .year-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Social Security Calculator</h1>
+
+    <div>
+        <label for="birth-year">Year of Birth:</label>
+        <input type="number" id="birth-year" placeholder="Enter your year of birth">
+    </div>
+
+    <div id="income-years">
+        <div class="year-container">
+            <input type="number" class="income" placeholder="Enter income">
+            <input type="number" class="year" placeholder="Enter year">
+        </div>
+    </div>
+
+    <button onclick="addYearField()">Add Year</button>
+    <button onclick="calculateBenefits()">Calculate</button>
+
+    <div id="results" class="result"></div>
+</div>
+
+<script>
+    const indexingFactors = {
+        // Example factors (should be filled with actual data)
+        2022: 1.02,
+        2021: 1.03,
+        // Add more as needed
+    };
+
+    function addYearField() {
+        const container = document.getElementById('income-years');
+        const yearContainer = document.createElement('div');
+        yearContainer.classList.add('year-container');
+
+        yearContainer.innerHTML = `
+                <input type="number" class="income" placeholder="Enter income">
+                <input type="number" class="year" placeholder="Enter year">
+            `;
+
+        container.appendChild(yearContainer);
+    }
+
+    function calculateBenefits() {
+        const birthYear = document.getElementById('birth-year').value;
+        if (!birthYear) {
+            alert('Please enter your year of birth.');
+            return;
+        }
+
+        const incomeFields = document.querySelectorAll('.income');
+        const yearFields = document.querySelectorAll('.year');
+
+        let earnings = [];
+        for (let i = 0; i < incomeFields.length; i++) {
+            const income = parseFloat(incomeFields[i].value);
+            const year = parseInt(yearFields[i].value);
+
+            if (isNaN(income) || isNaN(year)) continue;
+
+            const cappedIncome = Math.min(income, 168600);
+            const indexingFactor = indexingFactors[year] || 1.05;
+            const indexedEarnings = cappedIncome * indexingFactor;
+
+            earnings.push(indexedEarnings);
+        }
+
+        if (earnings.length < 10) {
+            document.getElementById('results').innerHTML =
+                `<p>You have ${earnings.length * 4} points. Not enough points yet.</p>`;
+            return;
+        }
+
+        earnings.sort((a, b) => b - a);
+        const highest35 = earnings.slice(0, 35);
+        const totalIndexedEarnings = highest35.reduce((a, b) => a + b, 0);
+        const AIME = Math.floor(totalIndexedEarnings / 420);
+
+        let PIA = 0;
+        if (AIME <= 1226) {
+            PIA = AIME * 0.9;
+        } else if (AIME <= 7391) {
+            PIA = 1226 * 0.9 + (AIME - 1226) * 0.32;
+        } else {
+            PIA = 1226 * 0.9 + (7391 - 1226) * 0.32 + (AIME - 7391) * 0.15;
+        }
+
+        const fullRetirementYear = parseInt(birthYear) + 67;
+
+        document.getElementById('results').innerHTML = `
+                <p>Full Retirement Age: ${fullRetirementYear}</p>
+                <p>AIME: $${AIME}</p>
+                <p>Monthly Benefit (PIA): $${Math.floor(PIA)}</p>
+            `;
+    }
+</script>
+</body>
+</html>
